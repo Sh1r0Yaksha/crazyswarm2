@@ -17,7 +17,7 @@ from collections import defaultdict
 from crazyflie_interfaces.msg import FullState, Position, Status, TrajectoryPolynomialPiece
 from crazyflie_interfaces.srv import Arm, GoTo, Land, \
     NotifySetpointsStop, StartTrajectory, Takeoff, UploadTrajectory
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import PoseStamped, Point
 import numpy as np
 from rcl_interfaces.msg import Parameter, ParameterType, ParameterValue
 from rcl_interfaces.srv import DescribeParameters, GetParameters, ListParameters, SetParameters
@@ -142,6 +142,8 @@ class Crazyflie:
         self.statusSubscriber = node.create_subscription(
             Status, f'{self.prefix}/status', self.status_topic_callback, 10)
         self.status = {}
+        self.poseSubscriber = node.create_subscription(
+            PoseStamped, f'{self.prefix}/pose', self.pose_topic_callback, 10)
 
         # Query some settings
         self.getParamsService = node.create_client(
@@ -774,6 +776,26 @@ class Crazyflie:
         """
         # self.node.get_logger().info(f'Crazyflie.get_status() was called {self.status}')
         return self.status
+    
+    def pose_topic_callback(self, msg):
+        """
+        Call back for topic /cfXXX/pose.
+
+        Update the pose attribute every time a geometry_msgs/msg/Pose
+        message is published on the topic /cfXXX/pose
+        """
+        self.pose = {'position': np.array([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]),
+                     'orientation': np.array([msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w])}
+
+    def get_pose(self):
+        """
+        Return the pose attribute.
+
+        Pose is a dictionary containing:
+        position and orientation. see geometry_msgs/msg/Pose for details
+        """
+        # self.node.get_logger().info(f'Crazyflie.get_status() was called {self.status}')
+        return self.pose
 
 
 class CrazyflieServer(rclpy.node.Node):
