@@ -141,7 +141,19 @@ class Crazyflie:
         self.setParamsService.wait_for_service()
         self.statusSubscriber = node.create_subscription(
             Status, f'{self.prefix}/status', self.status_topic_callback, 10)
-        self.status = {}
+        self.status = {
+            'id': cfname, 
+            'timestamp_sec': 0,
+            'timestamp_nsec': 0,
+            'supervisor': 0,
+            'battery': 0,
+            'pm_state': 0,
+            'rssi': 0,
+            'num_rx_broadcast': 0,
+            'num_tx_broadcast': 0,
+            'num_rx_unicast': 0,
+            'num_tx_unicast': 0
+        }
         self.poseSubscriber = node.create_subscription(
             PoseStamped, f'{self.prefix}/pose', self.pose_topic_callback, 10)
 
@@ -163,6 +175,12 @@ class Crazyflie:
                     self.initialPosition = np.array(response.values[0].double_array_value)
                 else:
                     assert False
+
+                # initialise pose dict
+                self.pose = {
+                    'position': self.initialPosition,
+                    'orientation': np.array([0.0, 0.0, 0.0])
+                }
 
                 # extract uri
                 self.uri = response.values[1].string_value
